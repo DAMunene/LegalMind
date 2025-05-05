@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Contract Details{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with improved styling -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">{{ contract.title }}</h2>
+            <p class="text-muted mb-0">Contract details and risk analysis</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'contract-download' contract.pk %}" class="btn btn-outline-primary">
+                <i class="fas fa-download me-1"></i> Download
+            </a>
+            <a href="{% url 'contracts' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Contracts
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main content column -->
+        <div class="col-lg-8">
+            <!-- Risk Assessment Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Risk Assessment</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">Overall Risk Score</span>
+                            <span class="badge {% if risk_analysis.risk_score >= 70 %}bg-danger{% elif risk_analysis.risk_score >= 30 %}bg-warning{% else %}bg-success{% endif %} px-3 py-2">
+                                {{ risk_analysis.risk_score }}%
+                            </span>
+                        </div>
+                        <div class="progress mb-3" style="height: 10px;">
+                            {% if risk_analysis.risk_score >= 70 %}
+                                <div class="progress-bar bg-danger" 
+                                    role="progressbar" 
+                                    style="width: {{ risk_analysis.risk_score }}%"
+                                    aria-valuenow="{{ risk_analysis.risk_score }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100">
+                                </div>
+                            {% elif risk_analysis.risk_score >= 30 %}
+                                <div class="progress-bar bg-warning" 
+                                    role="progressbar" 
+                                    style="width: {{ risk_analysis.risk_score }}%"
+                                    aria-valuenow="{{ risk_analysis.risk_score }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100">
+                                </div>
+                            {% else %}
+                                <div class="progress-bar bg-success" 
+                                    role="progressbar" 
+                                    style="width: {{ risk_analysis.risk_score }}%"
+                                    aria-valuenow="{{ risk_analysis.risk_score }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100">
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="alert {% if risk_analysis.risk_score >= 70 %}alert-danger{% elif risk_analysis.risk_score >= 30 %}alert-warning{% else %}alert-success{% endif %} mb-0">
+                            <p class="mb-0">{{ risk_analysis.summary }}</p>
+                        </div>
+                    </div>
+
+                    {% if risk_analysis.risky_clauses %}
+                    <div>
+                        <h6 class="fw-medium mb-3">Risk Factors Identified</h6>
+                        <div class="list-group">
+                            {% for clause in risk_analysis.risky_clauses %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h6 class="mb-1 text-danger">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Risky Clause
+                                    </h6>
+                                    <span class="badge bg-danger">{{ clause.risk_percentage|default:"7" }}%</span>
+                                </div>
+                                <p class="mb-2 fw-medium">{{ clause.clause }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-file-alt me-1"></i> Page {{ clause.page_number }}
+                                    </small>
+                                    <a href="#" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#clauseModal" data-clause="{{ clause.clause }}" data-page="{{ clause.page_number }}">
+                                        View in Context
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- AI Analysis Card -->
+          
+        </div>
+        
+        <!-- Sidebar column -->
+        <div class="col-lg-4">
+            <!-- Contract Info Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contract Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Created</span>
+                            <span class="fw-medium">{{ contract.created_at|date:"F j, Y" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">File Type</span>
+                            <span class="fw-medium">{{ file_extension|upper }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">File Size</span>
+                            <span class="fw-medium">{{ contract.file.size|filesizeformat }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Uploaded By</span>
+                            <span class="fw-medium">{{ contract.uploaded_by|default:"Admin User" }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-light text-center">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'contract-edit' contract.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </a>
+                        <a href="#" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-share-alt me-1"></i> Share Contract
+                        </a>
+                        <a href="#" class="btn btn-outline-success">
+                            <i class="fas fa-check-circle me-1"></i> Mark as Reviewed
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="fas fa-print me-1"></i> Print Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clause Detail Modal -->
+<div class="modal fade" id="clauseModal" tabindex="-1" aria-labelledby="clauseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clauseModalLabel">Clause Context</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="clauseRiskText">This clause has been identified as potentially risky.</span>
+                </div>
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between">
+                        <span>Contract Excerpt</span>
+                        <span class="text-muted" id="clausePageNumber">Page 1</span>
+                    </div>
+                    <div class="card-body">
+                        <p id="clauseText" class="mb-0"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete "{{ contract.title }}"? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'contract-delete' contract.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Contract</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up clause modal functionality
+        const clauseModal = document.getElementById('clauseModal');
+        if (clauseModal) {
+            clauseModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const clause = button.getAttribute('data-clause');
+                const page = button.getAttribute('data-page');
+                
+                const clauseText = document.getElementById('clauseText');
+                const clausePageNumber = document.getElementById('clausePageNumber');
+                
+                clauseText.textContent = clause;
+                clausePageNumber.textContent = 'Page ' + page;
+            });
+        }
+    });
+</script>
+{% endblock %}

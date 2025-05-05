@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Contract{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with improved styling -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Upload Contract</h2>
+            <p class="text-muted mb-0">Add a new contract for analysis and management</p>
+        </div>
+        <div>
+            <a href="{% url 'contracts' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Contracts
+            </a>
+        </div>
+    </div>
+
+    <!-- Upload form card -->
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="{{ form.title.id_for_label }}" class="form-label fw-medium">Contract Title</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-file-signature text-muted"></i>
+                        </span>
+                        {{ form.title }}
+                    </div>
+                    {% if form.title.errors %}
+                        <div class="text-danger mt-1 small">
+                            {{ form.title.errors }}
+                        </div>
+                    {% else %}
+                        <div class="form-text">Enter a descriptive name for this contract</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="{{ form.file.id_for_label }}" class="form-label fw-medium">Contract File</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-upload text-muted"></i>
+                        </span>
+                        {{ form.file }}
+                    </div>
+                    {% if form.file.errors %}
+                        <div class="text-danger mt-1 small">
+                            {{ form.file.errors }}
+                        </div>
+                    {% else %}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i> Supported formats: PDF, DOCX (Max size: 10MB)
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="alert alert-info d-flex" role="alert">
+                    <div class="me-2">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div>
+                        <h6 class="alert-heading mb-1">Automatic Risk Analysis</h6>
+                        <p class="mb-0">Your contract will be analyzed for potential legal and compliance risks upon upload.</p>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{% url 'contracts' %}" class="btn btn-light me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i> Upload and Analyze
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Additional help card -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Tips for Contract Upload</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="d-flex">
+                        <div class="me-3 text-primary">
+                            <i class="fas fa-file-pdf fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6>File Quality</h6>
+                            <p class="text-muted small mb-0">PDF files with text layers provide better analysis results than scanned documents.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="d-flex">
+                        <div class="me-3 text-primary">
+                            <i class="fas fa-search-plus fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6>Analysis Time</h6>
+                            <p class="text-muted small mb-0">Larger contracts may take a few minutes to process and analyze.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex">
+                        <div class="me-3 text-primary">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6>Privacy</h6>
+                            <p class="text-muted small mb-0">All contracts are processed securely and stored with encryption.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

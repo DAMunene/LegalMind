@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}Contracts Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with improved styling -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Contract Management</h2>
+            <p class="text-muted mb-0">View, search and manage your legal documents</p>
+        </div>
+        <div>
+            <a href="{% url 'contract-upload' %}" class="btn btn-primary">
+                <i class="fas fa-upload me-1"></i> Upload Contract
+            </a>
+        </div>
+    </div>
+
+    <!-- Improved search with filters -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        {{ search_form.search_query }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="risk_level">
+                        <option value="">Filter by Risk</option>
+                        <option value="high" {% if request.GET.risk_level == 'high' %}selected{% endif %}>High Risk (70%+)</option>
+                        <option value="medium" {% if request.GET.risk_level == 'medium' %}selected{% endif %}>Medium Risk (30-70%)</option>
+                        <option value="low" {% if request.GET.risk_level == 'low' %}selected{% endif %}>Low Risk (0-30%)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Enhanced table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Upload Date</th>
+                            <th>Risk Score</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contract in contracts %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-contract text-primary me-2"></i>
+                                    <div>
+                                        <div class="fw-medium">{{ contract.title }}</div>
+                                        <small class="text-muted">{{ contract.file.name|truncatechars:30 }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ contract.created_at|date:"F j, Y" }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% with risk_score=contract.riskanalysis.risk_score|default:0 %}
+                                    <div class="me-2 fw-bold">
+                                        {{ risk_score }}%
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar {% if risk_score >= 70 %}bg-danger{% elif risk_score >= 30 %}bg-warning{% else %}bg-success{% endif %}"
+                                              role="progressbar"
+                                              style="width: {{ risk_score }}%"
+                                              aria-valuenow="{{ risk_score }}"
+                                              aria-valuemin="0"
+                                              aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    {% endwith %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'contract-detail' contract.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i> View
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="{% url 'contract-edit' contract.pk %}"><i class="fas fa-edit me-1"></i> Edit</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'contract-download' contract.pk %}"><i class="fas fa-download me-1"></i> Download</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal" data-contract-id="{{ contract.pk }}">
+                                            <i class="fas fa-trash-alt me-1"></i> Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-file-search fa-3x mb-3"></i>
+                                    <p>No contracts found. Upload your first contract to get started!</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if contracts.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if contracts.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ contracts.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&laquo;</span>
+            </li>
+            {% endif %}
+            
+            {% for i in contracts.paginator.page_range %}
+                {% if contracts.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if contracts.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ contracts.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&raquo;</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete this contract? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger">Delete Contract</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up delete modal functionality
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const contractId = button.getAttribute('data-contract-id');
+                const deleteForm = document.getElementById('deleteForm');
+                if (deleteForm) {
+                    deleteForm.action = `/api/contracts/${contractId}/delete/`;
+                    console.log('Setting delete form action to:', deleteForm.action);
+                } else {
+                    console.error('Delete form not found');
+                }
+            });
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}
